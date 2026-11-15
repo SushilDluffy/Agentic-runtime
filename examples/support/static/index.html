@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Support desk · Agentic Runtime</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header><strong>Support desk</strong><span>Agentic Runtime · local demo</span></header>
+<main>
+<section class="intro"><p class="eyebrow">TICKET T-100</p><h1>Resolve an issue.<br>Stay in control.</h1>
+<p>Investigate an invoice download issue, review the response, and follow the result.</p></section>
+<div class="layout"><section class="card">
+<h2>Task</h2><label for="objective">What should the assistant do?</label>
+<textarea id="objective" rows="3">Investigate ticket T-100, record the resolution, and send a response to the customer.</textarea>
+<div class="buttons"><button id="start">Start task</button><button id="cancel" class="secondary" disabled>Cancel task</button></div>
+<p id="status" role="status">Ready</p><p id="error" role="alert"></p>
+<div id="interaction" hidden><h2 id="prompt"></h2><pre id="payload"></pre>
+<label id="reply-label" for="reply">Reply as JSON</label><textarea id="reply" rows="4"></textarea>
+<div class="buttons"><button id="respond">Submit reply</button><button id="reject" class="secondary" hidden>Reject</button></div></div>
+<button id="resume" class="secondary" hidden>Recheck blocked task</button>
+</section><section class="card"><h2>Activity</h2><ol id="events" aria-live="polite"></ol></section></div>
+<section class="card result"><h2>Result and evidence</h2><pre id="result">The result will appear here as the task progresses.</pre></section>
+</main><script src="/static/app.js"></script>
+</body></html>

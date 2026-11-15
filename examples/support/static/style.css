@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+:root { font-family: 'DM Sans', sans-serif; color: #203633; background: #f4f5f0; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { padding: 22px 6vw; border-bottom: 1px solid #d5ddd5; display: flex; justify-content: space-between; gap: 20px; }
+header span { color: #64726a; font-size: 14px; }
+main { max-width: 1120px; margin: auto; padding: 48px 24px; }
+.intro { max-width: 660px; margin-bottom: 32px; }
+.eyebrow { letter-spacing: .12em; font-size: 12px; font-weight: 700; }
+h1 { font-size: clamp(32px, 5vw, 48px); letter-spacing: -.04em; line-height: 1.1; margin: 16px 0; }
+p { line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+.card { background: white; border: 1px solid #d5ddd5; border-radius: 14px; padding: 26px; }
+h2 { font-size: 18px; margin: 0 0 20px; }
+label { display: block; font-size: 14px; margin-bottom: 8px; }
+textarea { width: 100%; padding: 13px; border: 1px solid #bfcfc4; border-radius: 7px; font: inherit; resize: vertical; line-height: 1.5; }
+.buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+button { border: 1px solid #245848; background: #245848; color: white; padding: 11px 18px; font: inherit; border-radius: 7px; cursor: pointer; }
+button.secondary { background: white; color: #245848; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, textarea:focus { outline: 3px solid #92bd9e; outline-offset: 2px; }
+#status { font-weight: 600; }
+#error { color: #9d2a26; }
+#events { padding-left: 20px; max-height: 400px; overflow-y: auto; }
+#events li { margin: 10px 0; font-size: 14px; overflow-wrap: anywhere; }
+#interaction { border-top: 1px solid #d5ddd5; padding-top: 22px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f5f0; padding: 14px; border-radius: 7px; font-size: 13px; line-height: 1.5; }
+.result { margin-top: 20px; }
+@media (max-width: 700px) { .layout { grid-template-columns: 1fr; } header { flex-direction: column; gap: 6px; } main { padding-top: 28px; } }

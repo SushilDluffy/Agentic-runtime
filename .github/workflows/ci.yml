@@ -1,0 +1,30 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --all-extras
+      - run: uv run --frozen --all-extras ruff check src tests examples benchmarks
+      - run: uv run --frozen --all-extras ruff format --check src tests examples benchmarks
+      - run: uv run --frozen --all-extras pytest -q
+      - run: uv run --frozen --all-extras python -m benchmarks.run --output /tmp/benchmark-results.json
+      - run: uv run --frozen --all-extras python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validation-python-${{ matrix.python }}
+          path: |
+            dist/*
+            /tmp/benchmark-results.json
