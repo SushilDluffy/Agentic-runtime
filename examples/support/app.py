@@ -9,7 +9,14 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from agentic_runtime import Identity, OpenAIProvider, Runtime, SQLiteStore, Worker
+from agentic_runtime import (
+    AnthropicProvider,
+    Identity,
+    OpenAIProvider,
+    Runtime,
+    SQLiteStore,
+    Worker,
+)
 from agentic_runtime.integrations.fastapi import create_router
 
 from .domain import SupportDatabase, support_agent
@@ -54,8 +61,14 @@ def create_app(directory: str | Path = ".demo", *, fault="none", provider=None):
 
 
 model = os.environ.get("OPENAI_MODEL")
+claude_model = os.environ.get("ANTHROPIC_MODEL")
+if model and claude_model:
+    raise ValueError("Configure only one of OPENAI_MODEL and ANTHROPIC_MODEL")
+provider = (
+    AnthropicProvider(claude_model) if claude_model else (OpenAIProvider(model) if model else None)
+)
 app = create_app(
     os.environ.get("DEMO_DIRECTORY", ".demo"),
     fault=os.environ.get("DEMO_FAULT", "none"),
-    provider=OpenAIProvider(model) if model else None,
+    provider=provider,
 )

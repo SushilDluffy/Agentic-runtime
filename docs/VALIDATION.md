@@ -4,13 +4,13 @@ Measured locally on November 15, 2026, using Python 3.12. The checked-in `uv.loc
 
 ## Automated coverage
 
-The local suite passes **42 tests**. It covers atomic task/event updates, restart during a user wait, duplicate input and approvals, changed arguments and action semantics, revoked authorization, lost responses, idempotent retry keys, unknown-outcome blocking, recovery after resume, cancellation during an action, competing runners (including process-level lock exclusion), preservation of unknown effects when a retry is cancelled or denied, budget persistence, failed verification, bounded read timeouts, artifact isolation, input-schema restrictions, HTTP ownership, server-owned limits, event replay, and the official OpenAI SDK request/response boundary.
+The local suite passes **51 tests**. It covers atomic task/event updates, restart during a user wait, duplicate input and approvals, changed arguments and action semantics, revoked authorization, lost responses, idempotent retry keys, unknown-outcome blocking, recovery after resume, cancellation during an action, competing runners (including process-level lock exclusion), preservation of unknown effects when a retry is cancelled or denied, budget persistence, failed verification, bounded read timeouts, artifact isolation, input-schema restrictions, HTTP ownership, server-owned limits, event replay, and the official OpenAI SDK request/response boundary.
 
 One test runs a real subprocess that exits immediately after the external simulation commits a send, before the runtime persists its result. Restart reconciles the original operation and verifies exactly one recorded send. Other failure tests use controlled async handlers and explicit persisted boundary states. They are not a substitute for testing the actual external systems an application will use.
 
 The support and project-management CLI examples run through the public API. The support UI and optional router are implemented; HTTP behavior is tested through ASGI. Browser visual verification remains pending because the available browser could not connect to the development server. No visual verification is claimed.
 
-The OpenAI adapter is tested using the official SDK with mocked HTTP transport, including payload formatting, token accounting, rate-limit retries, and malformed tool-call responses. No live OpenAI calls were made because no API key was available.
+The OpenAI adapter is tested using the official SDK with mocked HTTP transport, including payload formatting, token accounting, rate-limit retries, and malformed tool-call responses. No live OpenAI calls were made because no API key was available. On November 16, 2026, a separate [Claude live smoke test](CLAUDE_TEST.md) passed all six synthetic scenarios with Sonnet 5.5. This adds integration evidence, not a statistical reliability or competitive benchmark.
 
 ## LangGraph comparison
 

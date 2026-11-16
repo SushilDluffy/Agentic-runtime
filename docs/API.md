@@ -85,3 +85,14 @@ SSE uses `event: progress`, JSON event records, and durable monotonic `id` value
 `ScriptedProvider` selects decisions by the persisted decision index, making restarts deterministic. It returns a blocker when its script is exhausted. `OpenAIProvider` uses the official async SDK, one tool call per decision, and disables SDK retries so the runtime owns the retry budget. It records usage reported by successful responses; calls whose responses are lost can incur unreported provider usage. No dollar estimate or billing reconciliation is implemented.
 
 A custom provider implements `async decide(ModelContext) -> ModelReply`. Decisions are `ActionDecision`, `AskDecision`, `FinishDecision`, `BlockDecision`, and `RetrieveDecision`. Application tools, context, and tool results are untrusted model data; authorization and checks belong in application callbacks, not prompts.
+
+
+### Claude / Anthropic
+
+Install the `anthropic` extra and use `AnthropicProvider("claude-sonnet-5-5")`. It reads `ANTHROPIC_API_KEY` through the official async SDK. `max_output_tokens` defaults to 1024; SDK retries are disabled by the default client. A supplied `client` must manage its own retry policy. The adapter uses native Messages API tools with serial automatic tool selection. By default it leaves thinking configuration to the model; pass `thinking={"type": "between_tools"}` for Sonnet 5.5 when up-front thinking is unnecessary. This model rejects the older `disabled` setting. It rejects missing, multiple, malformed, or truncated tool decisions; the runtime's bounded model retry policy applies.
+
+Each decision is a fresh request built from the durable application history snapshot, not a continuation of a native assistant/tool-result conversation. The adapter does not persist or replay model thinking blocks.
+
+`provider.request(ModelContext)` exposes the exact request for host-side token counting and budget admission. The live example wraps the SDK Messages interface to count tokens, reserve budget, and record usage even when a response cannot become a valid decision. Core `Task.usage` counts usage from accepted provider replies, so malformed/lost responses can make that counter lower than billed usage. Cache reads/writes, if enabled through a custom client, count toward aggregate input tokens; the core counter alone does not distinguish their prices.
+
+The optional runner uses synthetic fixtures and fixed price configuration. Its reservations survive errors within that invocation, but do not survive restarting the runner or cover other processes using the same key. Keep a margin and treat Anthropic billing as authoritative.

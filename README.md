@@ -4,7 +4,7 @@
 
 Give an agent your application's typed actions, authenticated user context, and completion checks. The runtime manages execution, durable questions and approvals, recovery, and a result record you can inspect.
 
-**v0.1.0 is experimental.** The implementation, examples, failure tests, and scripted comparison are available. Live-model evaluation and independent developer usability testing remain open. The package is installable from this repository; it has not been published to PyPI.
+**v0.1.0 is experimental.** The implementation, examples, failure tests, and scripted comparison are available. A six-scenario Claude smoke test passes; broader live-model evaluation and independent developer usability testing remain open. The package is installable from this repository; it has not been published to PyPI.
 
 ## What it handles
 
@@ -18,6 +18,8 @@ Give an agent your application's typed actions, authenticated user context, and 
 | Recovery | Reconcile ambiguous writes, reuse idempotency keys, block unresolved outcomes |
 | Verification | Application checks gate success; results include evidence and unresolved effects |
 | API | Python API, worker, optional FastAPI router and reconnectable SSE |
+
+The [Claude live smoke test](docs/CLAUDE_TEST.md) passed six synthetic scenarios at an estimated $0.186 in model usage.
 
 The product hypothesis is that these behaviors are easier to ship through one small application API. The current comparison validates selected failure behavior; it does **not** establish an advantage over LangGraph.
 
@@ -49,7 +51,21 @@ python -m examples.projects.run
 
 A lost response recovers the recorded send without a second send. An unresolvable outcome blocks with an explicit unknown operation. CLI examples automatically answer their scripted prompts and approvals; the UI exposes them for human review.
 
-For real model decisions, set `OPENAI_API_KEY` and `OPENAI_MODEL` in your environment before starting the web application. Choose a tool-calling model available to your account. This makes paid API calls. The runtime path, tools, approvals, and checks stay the same. No live-model results are claimed in this release.
+For real model decisions, set `OPENAI_API_KEY` and `OPENAI_MODEL` in your environment before starting the web application. Choose a tool-calling model available to your account. This makes paid API calls. The runtime path, tools, approvals, and checks stay the same. The OpenAI path has mocked SDK tests; the [Claude live smoke test](docs/CLAUDE_TEST.md) records our first live-model results.
+
+## Test with Claude
+
+Install the optional adapter with `python -m pip install -e '.[anthropic]'`. The library reads `ANTHROPIC_API_KEY`, or the live test runner asks for it through a hidden terminal prompt. Never put credentials in command arguments, reports, or commits.
+
+```bash
+python -m examples.support.live --budget 1
+```
+
+The runner uses Claude Sonnet 5.5 and synthetic support data. It tests completion, rejection, reopening a waiting task, lost-response recovery, unknown outcomes, and cancellation before sending. It stops at the first unexpected failure and writes a report to `.demo-live/results.json`.
+
+Before each inference call it counts input tokens, adds headroom, and reserves the full maximum output cost against the batch budget. It caps model calls, disables SDK retries, and retains reservations after failed requests. This process-local guard is not an account-wide billing cap. Rates are explicit in `examples/support/live.py` and must be reviewed when prices change. Re-running starts a new batch budget; reported costs are estimates, not a balance query.
+
+For the web demo, set `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL=claude-sonnet-5-5` instead of `OPENAI_MODEL`. The web demo uses ordinary runtime call/token limits; the dollar reservation guard belongs to the CLI test runner.
 
 ## Small Python API
 
@@ -114,7 +130,7 @@ Replace `ScriptedProvider(...)` with `OpenAIProvider(model="your-model")` after 
 ## Development and evidence
 
 ```bash
-python -m pip install -e '.[dev,web,openai,benchmark]'
+python -m pip install -e '.[dev,web,openai,anthropic,benchmark]'
 python -m pytest -q
 ruff check src tests examples benchmarks
 ruff format --check src tests examples benchmarks

@@ -1,6 +1,6 @@
 # Contributing
 
-Use Python 3.11+ and install the repository with `python -m pip install -e '.[dev,web,openai,benchmark]'`, or use `uv sync --frozen --all-extras` for the locked environment.
+Use Python 3.11+ and install the repository with `python -m pip install -e '.[dev,web,openai,anthropic,benchmark]'`, or use `uv sync --frozen --all-extras` for the locked environment.
 
 Before proposing a change, run pytest, Ruff lint and formatting checks, and `python -m build`. Changes to dispatch, approval, storage, or recovery need a regression scenario showing the failure boundary. Use deterministic handlers for reproducibility; separately label any paid live-model evaluation. Do not commit credentials, task databases, or customer records.
 

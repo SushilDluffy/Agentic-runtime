@@ -1,0 +1,688 @@
+{
+  "timestamp_utc": "2026-11-16T11:04:55.682565+00:00",
+  "mode": "live",
+  "model": "claude-sonnet-5-5",
+  "budget_usd": 1.0,
+  "scenarios": [
+    {
+      "scenario": "normal",
+      "passed": true,
+      "status": "succeeded",
+      "reason": null,
+      "sends": 1,
+      "reference_preserved": true,
+      "restarted": false,
+      "interventions": [
+        "input",
+        "approve"
+      ],
+      "usage": {
+        "model_calls": 6,
+        "tool_calls": 4,
+        "input_tokens": 12324,
+        "output_tokens": 936,
+        "active_seconds": 18.018971920013428
+      },
+      "operations": [
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "add_note",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "send_response",
+          "state": "applied",
+          "attempts": 1
+        }
+      ],
+      "checks": [
+        {
+          "name": "ticket_and_delivery",
+          "passed": true
+        }
+      ],
+      "api_calls": [
+        {
+          "counted_input_tokens": 1799,
+          "reserved_input_tokens": 2760,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01576,
+          "input_tokens": 1799,
+          "output_tokens": 71,
+          "estimated_usd": 0.004308,
+          "stop_reason": "tool_use",
+          "seconds": 1.471
+        },
+        {
+          "counted_input_tokens": 1897,
+          "reserved_input_tokens": 2883,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016006,
+          "input_tokens": 1897,
+          "output_tokens": 183,
+          "estimated_usd": 0.005624,
+          "stop_reason": "tool_use",
+          "seconds": 1.691
+        },
+        {
+          "counted_input_tokens": 1964,
+          "reserved_input_tokens": 2967,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016174,
+          "input_tokens": 1964,
+          "output_tokens": 163,
+          "estimated_usd": 0.005558,
+          "stop_reason": "tool_use",
+          "seconds": 1.581
+        },
+        {
+          "counted_input_tokens": 2109,
+          "reserved_input_tokens": 3148,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016536,
+          "input_tokens": 2109,
+          "output_tokens": 77,
+          "estimated_usd": 0.004988,
+          "stop_reason": "tool_use",
+          "seconds": 1.998
+        },
+        {
+          "counted_input_tokens": 2227,
+          "reserved_input_tokens": 3295,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01683,
+          "input_tokens": 2227,
+          "output_tokens": 131,
+          "estimated_usd": 0.005764,
+          "stop_reason": "tool_use",
+          "seconds": 1.433
+        },
+        {
+          "counted_input_tokens": 2328,
+          "reserved_input_tokens": 3422,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.017084,
+          "input_tokens": 2328,
+          "output_tokens": 311,
+          "estimated_usd": 0.007766,
+          "stop_reason": "tool_use",
+          "seconds": 2.969
+        }
+      ]
+    },
+    {
+      "scenario": "reject",
+      "passed": true,
+      "status": "blocked",
+      "reason": "Sending the response to the customer for ticket T-100 was denied (approval rejected). The internal note was added and verified (version 1, includes reference INV-204), but the resolution email was not sent to the customer. Delivery is blocked pending approval.",
+      "sends": 0,
+      "reference_preserved": false,
+      "restarted": false,
+      "interventions": [
+        "input",
+        "reject"
+      ],
+      "usage": {
+        "model_calls": 6,
+        "tool_calls": 3,
+        "input_tokens": 12255,
+        "output_tokens": 780,
+        "active_seconds": 12.977982759475708
+      },
+      "operations": [
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "add_note",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "send_response",
+          "state": "denied",
+          "attempts": 0
+        }
+      ],
+      "checks": [],
+      "api_calls": [
+        {
+          "counted_input_tokens": 1799,
+          "reserved_input_tokens": 2760,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01576,
+          "input_tokens": 1799,
+          "output_tokens": 66,
+          "estimated_usd": 0.004258,
+          "stop_reason": "tool_use",
+          "seconds": 1.297
+        },
+        {
+          "counted_input_tokens": 1895,
+          "reserved_input_tokens": 2880,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016,
+          "input_tokens": 1895,
+          "output_tokens": 177,
+          "estimated_usd": 0.00556,
+          "stop_reason": "tool_use",
+          "seconds": 2.331
+        },
+        {
+          "counted_input_tokens": 1959,
+          "reserved_input_tokens": 2960,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01616,
+          "input_tokens": 1959,
+          "output_tokens": 164,
+          "estimated_usd": 0.005558,
+          "stop_reason": "tool_use",
+          "seconds": 2.104
+        },
+        {
+          "counted_input_tokens": 2105,
+          "reserved_input_tokens": 3143,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016526,
+          "input_tokens": 2105,
+          "output_tokens": 80,
+          "estimated_usd": 0.00501,
+          "stop_reason": "tool_use",
+          "seconds": 1.729
+        },
+        {
+          "counted_input_tokens": 2224,
+          "reserved_input_tokens": 3292,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016824,
+          "input_tokens": 2224,
+          "output_tokens": 135,
+          "estimated_usd": 0.005798,
+          "stop_reason": "tool_use",
+          "seconds": 2.631
+        },
+        {
+          "counted_input_tokens": 2273,
+          "reserved_input_tokens": 3353,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016946,
+          "input_tokens": 2273,
+          "output_tokens": 158,
+          "estimated_usd": 0.006126,
+          "stop_reason": "tool_use",
+          "seconds": 1.689
+        }
+      ]
+    },
+    {
+      "scenario": "restart_input",
+      "passed": true,
+      "status": "succeeded",
+      "reason": null,
+      "sends": 1,
+      "reference_preserved": true,
+      "restarted": true,
+      "interventions": [
+        "input",
+        "approve"
+      ],
+      "usage": {
+        "model_calls": 6,
+        "tool_calls": 4,
+        "input_tokens": 12292,
+        "output_tokens": 862,
+        "active_seconds": 11.096496343612671
+      },
+      "operations": [
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "add_note",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "send_response",
+          "state": "applied",
+          "attempts": 1
+        }
+      ],
+      "checks": [
+        {
+          "name": "ticket_and_delivery",
+          "passed": true
+        }
+      ],
+      "api_calls": [
+        {
+          "counted_input_tokens": 1799,
+          "reserved_input_tokens": 2760,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01576,
+          "input_tokens": 1799,
+          "output_tokens": 66,
+          "estimated_usd": 0.004258,
+          "stop_reason": "tool_use",
+          "seconds": 1.339
+        },
+        {
+          "counted_input_tokens": 1892,
+          "reserved_input_tokens": 2877,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.015994,
+          "input_tokens": 1892,
+          "output_tokens": 181,
+          "estimated_usd": 0.005594,
+          "stop_reason": "tool_use",
+          "seconds": 1.772
+        },
+        {
+          "counted_input_tokens": 1957,
+          "reserved_input_tokens": 2958,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016156,
+          "input_tokens": 1957,
+          "output_tokens": 163,
+          "estimated_usd": 0.005544,
+          "stop_reason": "tool_use",
+          "seconds": 1.574
+        },
+        {
+          "counted_input_tokens": 2099,
+          "reserved_input_tokens": 3135,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01651,
+          "input_tokens": 2099,
+          "output_tokens": 108,
+          "estimated_usd": 0.005278,
+          "stop_reason": "tool_use",
+          "seconds": 1.489
+        },
+        {
+          "counted_input_tokens": 2224,
+          "reserved_input_tokens": 3292,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016824,
+          "input_tokens": 2224,
+          "output_tokens": 131,
+          "estimated_usd": 0.005758,
+          "stop_reason": "tool_use",
+          "seconds": 1.553
+        },
+        {
+          "counted_input_tokens": 2321,
+          "reserved_input_tokens": 3413,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.017066,
+          "input_tokens": 2321,
+          "output_tokens": 213,
+          "estimated_usd": 0.006772,
+          "stop_reason": "tool_use",
+          "seconds": 2.116
+        }
+      ]
+    },
+    {
+      "scenario": "lost_response",
+      "passed": true,
+      "status": "succeeded",
+      "reason": null,
+      "sends": 1,
+      "reference_preserved": true,
+      "restarted": false,
+      "interventions": [
+        "input",
+        "approve"
+      ],
+      "usage": {
+        "model_calls": 6,
+        "tool_calls": 4,
+        "input_tokens": 12296,
+        "output_tokens": 887,
+        "active_seconds": 12.614279985427856
+      },
+      "operations": [
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "add_note",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "send_response",
+          "state": "applied",
+          "attempts": 1
+        }
+      ],
+      "checks": [
+        {
+          "name": "ticket_and_delivery",
+          "passed": true
+        }
+      ],
+      "api_calls": [
+        {
+          "counted_input_tokens": 1799,
+          "reserved_input_tokens": 2760,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01576,
+          "input_tokens": 1799,
+          "output_tokens": 66,
+          "estimated_usd": 0.004258,
+          "stop_reason": "tool_use",
+          "seconds": 1.319
+        },
+        {
+          "counted_input_tokens": 1895,
+          "reserved_input_tokens": 2880,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016,
+          "input_tokens": 1895,
+          "output_tokens": 201,
+          "estimated_usd": 0.0058,
+          "stop_reason": "tool_use",
+          "seconds": 1.803
+        },
+        {
+          "counted_input_tokens": 1958,
+          "reserved_input_tokens": 2959,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016158,
+          "input_tokens": 1958,
+          "output_tokens": 165,
+          "estimated_usd": 0.005566,
+          "stop_reason": "tool_use",
+          "seconds": 2.151
+        },
+        {
+          "counted_input_tokens": 2101,
+          "reserved_input_tokens": 3138,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016516,
+          "input_tokens": 2101,
+          "output_tokens": 79,
+          "estimated_usd": 0.004992,
+          "stop_reason": "tool_use",
+          "seconds": 1.357
+        },
+        {
+          "counted_input_tokens": 2223,
+          "reserved_input_tokens": 3290,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01682,
+          "input_tokens": 2223,
+          "output_tokens": 136,
+          "estimated_usd": 0.005806,
+          "stop_reason": "tool_use",
+          "seconds": 1.904
+        },
+        {
+          "counted_input_tokens": 2320,
+          "reserved_input_tokens": 3412,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.017064,
+          "input_tokens": 2320,
+          "output_tokens": 240,
+          "estimated_usd": 0.00704,
+          "stop_reason": "tool_use",
+          "seconds": 2.847
+        }
+      ]
+    },
+    {
+      "scenario": "unknown",
+      "passed": true,
+      "status": "blocked",
+      "reason": "External outcome remains unknown",
+      "sends": 1,
+      "reference_preserved": true,
+      "restarted": false,
+      "interventions": [
+        "input",
+        "approve"
+      ],
+      "usage": {
+        "model_calls": 5,
+        "tool_calls": 4,
+        "input_tokens": 9983,
+        "output_tokens": 661,
+        "active_seconds": 10.467758655548096
+      },
+      "operations": [
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "add_note",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "send_response",
+          "state": "unknown",
+          "attempts": 1
+        }
+      ],
+      "checks": [],
+      "api_calls": [
+        {
+          "counted_input_tokens": 1799,
+          "reserved_input_tokens": 2760,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01576,
+          "input_tokens": 1799,
+          "output_tokens": 66,
+          "estimated_usd": 0.004258,
+          "stop_reason": "tool_use",
+          "seconds": 1.28
+        },
+        {
+          "counted_input_tokens": 1894,
+          "reserved_input_tokens": 2879,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.015998,
+          "input_tokens": 1894,
+          "output_tokens": 197,
+          "estimated_usd": 0.005758,
+          "stop_reason": "tool_use",
+          "seconds": 2.43
+        },
+        {
+          "counted_input_tokens": 1960,
+          "reserved_input_tokens": 2962,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016164,
+          "input_tokens": 1960,
+          "output_tokens": 166,
+          "estimated_usd": 0.00558,
+          "stop_reason": "tool_use",
+          "seconds": 2.2
+        },
+        {
+          "counted_input_tokens": 2105,
+          "reserved_input_tokens": 3143,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016526,
+          "input_tokens": 2105,
+          "output_tokens": 102,
+          "estimated_usd": 0.00523,
+          "stop_reason": "tool_use",
+          "seconds": 1.982
+        },
+        {
+          "counted_input_tokens": 2225,
+          "reserved_input_tokens": 3293,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016826,
+          "input_tokens": 2225,
+          "output_tokens": 130,
+          "estimated_usd": 0.00575,
+          "stop_reason": "tool_use",
+          "seconds": 1.55
+        }
+      ]
+    },
+    {
+      "scenario": "cancel_wait",
+      "passed": true,
+      "status": "cancelled",
+      "reason": "Cancellation requested",
+      "sends": 0,
+      "reference_preserved": false,
+      "restarted": false,
+      "interventions": [
+        "input",
+        "cancel"
+      ],
+      "usage": {
+        "model_calls": 5,
+        "tool_calls": 3,
+        "input_tokens": 9979,
+        "output_tokens": 644,
+        "active_seconds": 9.149937391281128
+      },
+      "operations": [
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "add_note",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "read_ticket",
+          "state": "applied",
+          "attempts": 1
+        },
+        {
+          "action": "send_response",
+          "state": "prepared",
+          "attempts": 0
+        }
+      ],
+      "checks": [],
+      "api_calls": [
+        {
+          "counted_input_tokens": 1799,
+          "reserved_input_tokens": 2760,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.01576,
+          "input_tokens": 1799,
+          "output_tokens": 70,
+          "estimated_usd": 0.004298,
+          "stop_reason": "tool_use",
+          "seconds": 1.338
+        },
+        {
+          "counted_input_tokens": 1892,
+          "reserved_input_tokens": 2877,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.015994,
+          "input_tokens": 1892,
+          "output_tokens": 179,
+          "estimated_usd": 0.005574,
+          "stop_reason": "tool_use",
+          "seconds": 1.653
+        },
+        {
+          "counted_input_tokens": 1958,
+          "reserved_input_tokens": 2959,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016158,
+          "input_tokens": 1958,
+          "output_tokens": 162,
+          "estimated_usd": 0.005536,
+          "stop_reason": "tool_use",
+          "seconds": 2.226
+        },
+        {
+          "counted_input_tokens": 2104,
+          "reserved_input_tokens": 3142,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016524,
+          "input_tokens": 2104,
+          "output_tokens": 102,
+          "estimated_usd": 0.005228,
+          "stop_reason": "tool_use",
+          "seconds": 1.313
+        },
+        {
+          "counted_input_tokens": 2226,
+          "reserved_input_tokens": 3294,
+          "max_output_tokens": 1024,
+          "reserved_usd": 0.016828,
+          "input_tokens": 2226,
+          "output_tokens": 131,
+          "estimated_usd": 0.005762,
+          "stop_reason": "tool_use",
+          "seconds": 1.493
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Synthetic tickets and simulated delivery; no real customer messages.",
+    "One run per selected scenario; not a statistical reliability evaluation.",
+    "Restart reopens persisted state in-process; process death is tested separately.",
+    "Cost is estimated from reported usage; no account balance/billing API was queried.",
+    "Reservations are process-local and not an account-wide spending cap."
+  ],
+  "reserved_usd": 0.555772,
+  "preflight_errors": [],
+  "estimated_usd": 0.185958,
+  "python_version": "3.12.14",
+  "versions": {
+    "agentic-runtime": "0.1.0",
+    "anthropic": "0.125.0",
+    "httpx": "0.28.1",
+    "pydantic": "2.14.3"
+  },
+  "setup_findings": [
+    "SDK client initialization required the httpx SOCKS extra in this environment; no inference dispatched.",
+    "Two token-count preflights rejected thinking.type=disabled for Sonnet 5.5; no inference dispatched. Adapter configuration was corrected to between_tools before this batch."
+  ]
+}

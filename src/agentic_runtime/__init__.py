@@ -16,7 +16,7 @@ from .contracts import (
     TaskResult,
     TaskStatus,
 )
-from .providers import ModelContext, OpenAIProvider, Provider, ScriptedProvider
+from .providers import AnthropicProvider, ModelContext, OpenAIProvider, Provider, ScriptedProvider
 from .runtime import PermissionDenied, Runtime
 from .store import Conflict, NotFound, SQLiteStore, Store
 from .worker import Worker
@@ -28,6 +28,7 @@ __all__ = [
     "ActionDecision",
     "ActionRejected",
     "Agent",
+    "AnthropicProvider",
     "AskDecision",
     "BlockDecision",
     "CheckResult",
