@@ -32,6 +32,9 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
+github = [
+    { name = "httpx", extra = ["socks"] },
+]
 openai = [
     { name = "openai" },
 ]
@@ -48,6 +51,7 @@ requires-dist = [
     { name = "filelock", specifier = ">=3.16,<4" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28,<1" },
     { name = "httpx", extras = ["socks"], marker = "extra == 'anthropic'", specifier = ">=0.28,<1" },
+    { name = "httpx", extras = ["socks"], marker = "extra == 'github'", specifier = ">=0.28,<1" },
     { name = "jsonschema", specifier = ">=4.23,<5" },
     { name = "langgraph", marker = "extra == 'benchmark'", specifier = ">=1,<2" },
     { name = "langgraph-checkpoint-sqlite", marker = "extra == 'benchmark'", specifier = ">=3,<4" },
@@ -58,7 +62,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9" },
     { name = "uvicorn", marker = "extra == 'web'", specifier = ">=0.30,<1" },
 ]
-provides-extras = ["openai", "anthropic", "web", "dev", "benchmark"]
+provides-extras = ["openai", "anthropic", "github", "web", "dev", "benchmark"]
 
 [[package]]
 name = "aiosqlite"

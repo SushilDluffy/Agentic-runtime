@@ -117,6 +117,17 @@ asyncio.run(main())
 
 Replace `ScriptedProvider(...)` with `OpenAIProvider(model="your-model")` after installing the `openai` extra. Business actions receive `ctx.task_id`, `ctx.identity`, `ctx.operation_id`, and `ctx.dependencies`. Use the operation ID for external idempotency or durable application deduplication.
 
+## GitHub triage and the developer trial
+
+The [GitHub issue-triage example](examples/github_triage/README.md) proposes labels and missing-information questions, with optional exact-action approval before adding labels. It runs on synthetic fixtures by default; real repository reads are opt-in. No comments are posted.
+
+```bash
+python -m pip install -e '.[github]'
+python -m examples.github_triage.run
+```
+
+Our [internal developer trial](docs/DEVELOPER_TRIAL.md) found and fixed a large-output verification bug, exercised the installed package, and recorded live Claude runs. This is an author-led integration test, not independent evidence of developer-experience superiority.
+
 ## Guarantees and boundaries
 
 - A task succeeds only after all registered completion checks pass. Their quality and coverage remain the application's responsibility.

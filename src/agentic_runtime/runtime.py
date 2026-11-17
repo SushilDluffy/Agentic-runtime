@@ -248,15 +248,24 @@ class Runtime:
             self._finish_step(task_id)
 
     def _compact_value(self, task, value):
+        return self._prepare_value(task, value)[0]
+
+    def _prepare_value(self, task, value):
+        """Return persisted value and a trusted artifact ID when compaction actually occurred."""
         agent = self.agents[task.agent]
         value = agent.redact(value)
         encoded = json.dumps(value, ensure_ascii=False, allow_nan=False)
         if len(encoded.encode()) > task.limits.artifact_bytes:
             raise ValueError("Output exceeds artifact byte limit")
         if len(encoded) <= task.limits.inline_chars:
-            return value
+            return value, None
         artifact_id = self.store.put_artifact(task.id, value)
-        return {"artifact_id": artifact_id, "preview": encoded[:256], "characters": len(encoded)}
+        reference = {
+            "artifact_id": artifact_id,
+            "preview": encoded[:256],
+            "characters": len(encoded),
+        }
+        return reference, artifact_id
 
     def _model_context(self, task, application_context):
         agent = self.agents[task.agent]
@@ -425,8 +434,9 @@ class Runtime:
                 message = {"error": "Artifact unavailable for this task"}
 
         proposal = None
+        proposal_artifact_id = None
         if isinstance(decision, FinishDecision):
-            proposal = self._compact_value(task, decision.output)
+            proposal, proposal_artifact_id = self._prepare_value(task, decision.output)
 
         def change(current):
             current.usage.input_tokens += reply.input_tokens
@@ -449,6 +459,7 @@ class Runtime:
                 current.status = TaskStatus.WAITING_INPUT
             elif isinstance(decision, FinishDecision):
                 current.proposal = proposal
+                current.proposal_artifact_id = proposal_artifact_id
                 current.status = TaskStatus.VERIFYING
             elif isinstance(decision, BlockDecision):
                 current.reason = decision.reason
@@ -609,6 +620,13 @@ class Runtime:
 
     async def _verify(self, task):
         agent = self.agents[task.agent]
+        # Checks validate the full output, while public task state keeps the compact reference.
+        # Only a runtime-created persisted ID permits resolution; user-shaped JSON is not a ref.
+        output = (
+            json.loads(self.store.artifact(task.id, task.proposal_artifact_id))
+            if task.proposal_artifact_id is not None
+            else task.proposal
+        )
         checks = []
         for check in agent.checks:
             if self.store.get(task.id).cancel_requested:
@@ -616,7 +634,7 @@ class Runtime:
                 return
             try:
                 result = await self._invoke(
-                    task.id, lambda check=check: check(self._context(task), task.proposal)
+                    task.id, lambda check=check: check(self._context(task), output)
                 )
                 result = CheckResult.model_validate(result)
                 result.evidence = self._compact_value(task, result.evidence)

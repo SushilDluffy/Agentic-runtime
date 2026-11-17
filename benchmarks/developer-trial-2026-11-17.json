@@ -1,0 +1,60 @@
+{
+  "trial_kind": "Author-led internal integration exercise; not independent validation",
+  "date": "2026-11-17",
+  "python_version": "3.12.14",
+  "versions": {
+    "agentic-runtime": "0.1.0",
+    "anthropic": "0.125.0",
+    "httpx": "0.28.1",
+    "pydantic": "2.14.3"
+  },
+  "pytest_passed": 69,
+  "scripted_comparison_passed": 18,
+  "application_imports_runtime_from_public_top_level_only": true,
+  "source_lines_excluding_blank_and_comment_only": {
+    "examples/github_triage/__init__.py": 1,
+    "examples/github_triage/app.py": 173,
+    "examples/github_triage/domain.py": 123,
+    "examples/github_triage/fixtures.py": 101,
+    "examples/github_triage/run.py": 152
+  },
+  "source_count_limitations": "Includes docstrings and formatting; not a productivity comparison",
+  "live_github_open_issues": [],
+  "real_github_mutations": 0,
+  "live_model_reports": [
+    {
+      "report": "benchmarks/triage-claude-2026-11-17.json",
+      "status": "succeeded",
+      "inference_calls": 2,
+      "input_tokens": 4244,
+      "output_tokens": 1021,
+      "truncated_responses": 0,
+      "estimated_usd": 0.018698
+    },
+    {
+      "report": "benchmarks/triage-claude-attributed-2026-11-17.json",
+      "status": "succeeded",
+      "inference_calls": 4,
+      "input_tokens": 9087,
+      "output_tokens": 3076,
+      "truncated_responses": 2,
+      "estimated_usd": 0.048934
+    },
+    {
+      "report": "benchmarks/triage-claude-concise-2026-11-17.json",
+      "status": "succeeded",
+      "inference_calls": 2,
+      "input_tokens": 4304,
+      "output_tokens": 793,
+      "truncated_responses": 0,
+      "estimated_usd": 0.016538
+    }
+  ],
+  "total_estimated_usd": 0.08417,
+  "known_limitations": [
+    "Only synthetic issues in substantive triage runs",
+    "No live GitHub label writes",
+    "No independent developer or matched baseline trial",
+    "Typed final output and complete per-call usage accounting remain candidate SDK improvements"
+  ]
+}

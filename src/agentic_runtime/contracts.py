@@ -157,6 +157,7 @@ class Task(Contract):
     replies: dict[str, JsonValue] = Field(default_factory=dict)
     checks: list[CheckResult] = Field(default_factory=list)
     proposal: JsonValue = None
+    proposal_artifact_id: str | None = None
     reason: str | None = None
     cancel_requested: bool = False
     step_started_at: float | None = None

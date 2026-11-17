@@ -4,7 +4,7 @@ The supported import surface is `agentic_runtime`. Optional HTTP integration liv
 
 ## Define an agent
 
-`Agent(name, provider, actions, checks, ...)` requires at least one application completion check. Each check is an async function `(ActionContext, proposed_output) -> CheckResult`. Inspect domain records belonging to the current task where possible; a plausible model answer is not evidence of an external effect. Check names, details, evidence, and observation timestamps are recorded. A failed check gives the model bounded repair feedback.
+`Agent(name, provider, actions, checks, ...)` requires at least one application completion check. Each check is an async function `(ActionContext, proposed_output) -> CheckResult`. Inspect domain records belonging to the current task where possible; a plausible model answer is not evidence of an external effect. Check names, details, evidence, and observation timestamps are recorded. Completion checks receive the full redacted proposed output, including when it is stored as an artifact. Public task/result records retain the compact artifact reference. A failed check gives the model bounded repair feedback.
 
 Optional callbacks:
 

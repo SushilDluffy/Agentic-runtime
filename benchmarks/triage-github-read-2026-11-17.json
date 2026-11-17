@@ -1,0 +1,71 @@
+{
+  "timestamp_utc": "2026-11-17T04:49:30.010605+00:00",
+  "repository": "SushilDluffy/Agentic-runtime",
+  "source": "live GitHub REST reads",
+  "model": "scripted lifecycle decisions",
+  "selected_issues": [],
+  "writes_enabled": false,
+  "result": {
+    "task_id": "b0243b3b21b4433dba4859e357df055b",
+    "status": "succeeded",
+    "output": {
+      "items": []
+    },
+    "checks": [
+      {
+        "name": "triage_state",
+        "passed": true,
+        "detail": "Coverage, source revisions and label constraints verified",
+        "evidence": {
+          "repository": "SushilDluffy/Agentic-runtime",
+          "mode": "propose_only",
+          "issues": [],
+          "human_review": "Summary accuracy and label suitability require review"
+        },
+        "checked_at": 1794890970.002042
+      }
+    ],
+    "operations": [
+      {
+        "id": "037da5310d7b4c8bbd0fb0addd512624",
+        "action": "read_issues",
+        "arguments": {},
+        "input_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "action_version": "6f0c019ddbfd548a6b855a0da989d08d0dccd8cb82dd742dc25bddcbb30b4283",
+        "writes": false,
+        "state": "applied",
+        "attempts": 1,
+        "approved_digest": null,
+        "result": {
+          "repository": "SushilDluffy/Agentic-runtime",
+          "available_labels": [
+            "accessibility",
+            "bug",
+            "documentation",
+            "duplicate",
+            "enhancement",
+            "good first issue",
+            "help wanted",
+            "invalid",
+            "question",
+            "wontfix"
+          ],
+          "issues": []
+        },
+        "error": null,
+        "recorded_at": 1794890969.8477175
+      }
+    ],
+    "usage": {
+      "model_calls": 2,
+      "tool_calls": 1,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "active_seconds": 0.13478851318359375
+    },
+    "review_items": []
+  },
+  "estimated_usd": 0,
+  "api_calls": [],
+  "review": "Human review of classification quality is still required"
+}

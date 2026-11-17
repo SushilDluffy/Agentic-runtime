@@ -649,3 +649,33 @@ else:
         timeout=20,
     )
     assert process.returncode == 0, process.stderr
+
+
+async def test_large_proposal_is_resolved_for_checks_after_restart(tmp_path):
+    from agentic_runtime import ModelReply
+
+    output = {"content": "x" * 6000}
+
+    async def check(ctx, proposed):
+        return CheckResult(name="full_output", passed=proposed == output, detail="Full content")
+
+    runtime = make_runtime(tmp_path, check=check)
+    task = submit(runtime)
+    await runtime._accept(task.id, ModelReply(decision=FinishDecision(output=output)))
+    stored = runtime.store.get(task.id)
+    assert stored.status == "verifying" and stored.proposal_artifact_id
+    restarted = make_runtime(tmp_path, check=check)
+    completed = await restarted.run(task.id)
+    assert completed.status == "succeeded"
+    assert completed.proposal["artifact_id"] == stored.proposal_artifact_id
+
+
+async def test_user_output_resembling_artifact_is_not_dereferenced(tmp_path):
+    output = {"artifact_id": "not-an-engine-reference", "preview": "sample", "characters": 6}
+
+    async def check(ctx, proposed):
+        return CheckResult(name="literal_output", passed=proposed == output, detail="Literal JSON")
+
+    runtime = make_runtime(tmp_path, check=check, steps=[FinishDecision(output=output)])
+    task = await runtime.run(submit(runtime).id)
+    assert task.status == "succeeded" and task.proposal_artifact_id is None
