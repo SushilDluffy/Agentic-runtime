@@ -75,3 +75,8 @@ Source size counts and paid usage are in [the trial summary](../benchmarks/devel
 ## Next bounded work
 
 Prioritize consistent model-call usage accounting and a typed final-output contract, using the failures above as acceptance tests. Then exercise a hosted application with persistent task scope and real selected issues. Independent developer feedback and a comparable baseline exercise are still needed to substantiate the differentiation claim.
+
+
+## Follow-up — November 18, 2026
+
+v0.1.1 implements the two priorities above: `Agent.output_type` and durable model-call usage accounting, including rejected/truncated responses and cache buckets. The triage app now declares `output_type=TriageReport` instead of duplicating the schema in its prompt. Original measured reports above remain unchanged; no new paid run or independent participant is implied. See [V1 readiness](V1_READINESS.md) for current validation.

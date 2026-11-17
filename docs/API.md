@@ -6,6 +6,12 @@ The supported import surface is `agentic_runtime`. Optional HTTP integration liv
 
 `Agent(name, provider, actions, checks, ...)` requires at least one application completion check. Each check is an async function `(ActionContext, proposed_output) -> CheckResult`. Inspect domain records belonging to the current task where possible; a plausible model answer is not evidence of an external effect. Check names, details, evidence, and observation timestamps are recorded. Completion checks receive the full redacted proposed output, including when it is stored as an artifact. Public task/result records retain the compact artifact reference. A failed check gives the model bounded repair feedback.
 
+### Typed final output
+
+Set `Agent(..., output_type=YourPydanticModel)` to define the final result contract. Both built-in model adapters put that schema in the `runtime_finish` tool, including nested and recursive definitions. The runtime independently validates and normalizes the proposed JSON before persistence and application verification. Invalid output produces field-location/type feedback and another decision within the same model-call budget. Application checks still receive JSON and must verify business facts; schema validity alone never establishes success. Pydantic's model configuration controls coercion and extra-field handling; use `ConfigDict(strict=True, extra="forbid")` when appropriate.
+
+The schema is saved with each task. A changed output contract blocks an existing task, including after a wait; restore the compatible definition to resume, or perform an application migration. Custom validator implementations are not fingerprinted: bump `Agent.version` when their semantics change. Keep the redactor schema-preserving; a redacted persisted proposal that fails the contract cannot succeed. Omit `output_type` for the previous unrestricted JSON behavior.
+
 Optional callbacks:
 
 | Callback | Signature and purpose |
@@ -46,7 +52,7 @@ await runtime.respond(
 
 Responses queue the task; run it again or let a worker pick it up. Repeating the same request and payload is idempotent, including after completion. A different duplicate, expired request, or unanswered stale request raises `Conflict`. Only blocked tasks can be resumed with `await runtime.resume(id, identity)`. Resume preserves budgets and operation IDs. Failed/cancelled tasks are terminal.
 
-`runtime.cancel(id, identity)` synchronously records cancellation. `runtime.result(id, identity)` returns current output, checks, operations, usage, and review items; it is available before completion and its status must be checked. A cancelled task may still have applied or unknown writes.
+`runtime.cancel(id, identity)` synchronously records cancellation. `runtime.result(id, identity)` returns current output, checks, operations, per-attempt `model_calls`, aggregate usage, and review items; it is available before completion and its status must be checked. A cancelled task may still have applied or unknown writes.
 
 ## Worker and limits
 
@@ -82,7 +88,7 @@ SSE uses `event: progress`, JSON event records, and durable monotonic `id` value
 
 ## Providers
 
-`ScriptedProvider` selects decisions by the persisted decision index, making restarts deterministic. It returns a blocker when its script is exhausted. `OpenAIProvider` uses the official async SDK, one tool call per decision, and disables SDK retries so the runtime owns the retry budget. It records usage reported by successful responses; calls whose responses are lost can incur unreported provider usage. No dollar estimate or billing reconciliation is implemented.
+`ScriptedProvider` selects decisions by the persisted decision index, making restarts deterministic. It returns a blocker when its script is exhausted. `OpenAIProvider` uses the official async SDK, one tool call per decision, and disables SDK retries so the runtime owns the retry budget. Both live adapters record usage even when a response is truncated, malformed, or rejected for missing/multiple tool calls. Calls whose responses are lost can incur unreported provider usage.
 
 A custom provider implements `async decide(ModelContext) -> ModelReply`. Decisions are `ActionDecision`, `AskDecision`, `FinishDecision`, `BlockDecision`, and `RetrieveDecision`. Application tools, context, and tool results are untrusted model data; authorization and checks belong in application callbacks, not prompts.
 
@@ -93,6 +99,29 @@ Install the `anthropic` extra and use `AnthropicProvider("claude-sonnet-5-5")`. 
 
 Each decision is a fresh request built from the durable application history snapshot, not a continuation of a native assistant/tool-result conversation. The adapter does not persist or replay model thinking blocks.
 
-`provider.request(ModelContext)` exposes the exact request for host-side token counting and budget admission. The live example wraps the SDK Messages interface to count tokens, reserve budget, and record usage even when a response cannot become a valid decision. Core `Task.usage` counts usage from accepted provider replies, so malformed/lost responses can make that counter lower than billed usage. Cache reads/writes, if enabled through a custom client, count toward aggregate input tokens; the core counter alone does not distinguish their prices.
+`provider.request(ModelContext)` exposes the exact request for host-side token counting and budget admission. The live example wraps the SDK Messages interface to count tokens, reserve budget, and record usage even when a response cannot become a valid decision. Core `Task.usage` now includes all reported usage, including rejected provider replies. Each `ModelCall.usage` preserves cache read and creation buckets; aggregate `input_tokens` includes both. Lost responses remain unknown instead of being reported as free.
 
 The optional runner uses synthetic fixtures and fixed price configuration. Its reservations survive errors within that invocation, but do not survive restarting the runner or cover other processes using the same key. Keep a margin and treat Anthropic billing as authoritative.
+
+
+### Model-call ledger and cost estimates
+
+`Task.model_calls` and `TaskResult.model_calls` contain one durable record per runtime model dispatch: ID, provider/model, timestamps, state (`dispatched`, `returned`, `rejected`, `failed`, or `interrupted`), reported `ModelUsage` or `None`, a price snapshot, and optional `estimated_cost_usd`. `returned` means the adapter returned a normalized decision, not that the task or business checks passed. Call admission and the model-call counter commit together before invocation. Usage settlement and aggregate totals commit together independently of decision acceptance. Re-settlement cannot double-count tokens. The `model.call_finished` event identifies the settled call.
+
+On restart, an unsettled dispatch becomes `interrupted` with unknown usage. Timeouts and connection failures also retain unknown usage. Results include a review item when per-call usage or cost coverage is incomplete. A crash after receiving a response but before settlement can still lose its usage; the ledger makes that uncertainty visible. Historical tasks retain their old totals; no retrospective per-call data is invented. Consult provider billing for authoritative charges.
+
+A custom provider may return `ModelReply(..., input_tokens=..., output_tokens=...)` or raise `ModelResponseError("sanitized reason", usage=ModelUsage(...))` when rejecting a received response. Set `usage_known=False` on replies without usage. The backwards-compatible reply default is known zero for scripted providers. Paid adapters must explicitly supply reported usage or mark it unknown. Disable any SDK retries: otherwise one runtime dispatch can hide multiple paid network attempts.
+
+Optionally provide host-reviewed prices in USD per million tokens:
+
+```python
+from agentic_runtime import AnthropicProvider, TokenPrices
+
+# Illustrative configuration only; supply rates matching your model, tier and cache policy.
+provider = AnthropicProvider(
+    "your-model",
+    prices=TokenPrices(input="2", output="10", cache_read="0.2", cache_creation="2.5"),
+)
+```
+
+Estimates subtract cache buckets from ordinary input before applying their rates, preventing double-counting. If a used cache bucket has no configured rate, that call's estimate stays `None`. `usage.estimated_cost_usd` is the sum of available estimates; `usage.costed_model_calls` reports coverage. Decimal amounts serialize as strings. Scripted calls have zero prices. Rates are not fetched automatically and cannot represent every mixed cache TTL, prompt tier, service tier, server-tool fee or billing adjustment. Configure an appropriate effective rate or leave estimates unavailable. These estimates are not spend admission controls or account-wide caps; the optional live-test runner retains its separate conservative reservation guard.

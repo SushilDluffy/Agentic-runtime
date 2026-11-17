@@ -8,11 +8,19 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from .contracts import CheckResult, Identity, JsonValue, Reconciliation, Task, digest
+from .contracts import CheckResult, Identity, JsonValue, ModelUsage, Reconciliation, Task, digest
 
 
 class TransientError(Exception):
     """A retryable model/read failure, or a write with an uncertain outcome."""
+
+
+class ModelResponseError(TransientError):
+    """A rejected model response that may still have billable, reported token usage."""
+
+    def __init__(self, message: str, *, usage: ModelUsage | None = None):
+        super().__init__(message)
+        self.usage = usage
 
 
 class ActionRejected(Exception):
@@ -88,6 +96,7 @@ class Agent:
     authorize: Callable[[ActionContext, Action, BaseModel], Awaitable[bool]] | None = None
     can_respond: Callable[[Identity, Task], Awaitable[bool]] | None = None
     redact: Callable[[JsonValue], JsonValue] = lambda value: value
+    output_type: type[BaseModel] | None = None
     _actions: dict[str, Action] = field(init=False, repr=False)
 
     def __post_init__(self):
@@ -98,6 +107,10 @@ class Agent:
             raise ValueError("Register at least one application completion check")
         if not self.name or not self.version:
             raise ValueError("Agent name and version are required")
+        if self.output_type is not None and (
+            not isinstance(self.output_type, type) or not issubclass(self.output_type, BaseModel)
+        ):
+            raise TypeError("output_type must be a Pydantic model class")
 
     def action(self, name: str) -> Action:
         return self._actions[name]

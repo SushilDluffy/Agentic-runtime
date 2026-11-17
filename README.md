@@ -4,7 +4,7 @@
 
 Give an agent your application's typed actions, authenticated user context, and completion checks. The runtime manages execution, durable questions and approvals, recovery, and a result record you can inspect.
 
-**v0.1.0 is experimental.** The implementation, examples, failure tests, and scripted comparison are available. A six-scenario Claude smoke test passes; broader live-model evaluation and independent developer usability testing remain open. The package is installable from this repository; it has not been published to PyPI.
+**v0.1.1 is experimental.** The implementation, examples, failure tests, and scripted comparison are available. A six-scenario Claude smoke test passes; broader live-model evaluation and independent developer usability testing remain open. The package is installable from this repository; it has not been published to PyPI.
 
 ## What it handles
 
@@ -16,7 +16,8 @@ Give an agent your application's typed actions, authenticated user context, and 
 | Durable tasks | SQLite state and events, restart recovery, single-host task locks |
 | Human decisions | Structured input, approval bound to exact arguments, duplicate reply handling |
 | Recovery | Reconcile ambiguous writes, reuse idempotency keys, block unresolved outcomes |
-| Verification | Application checks gate success; results include evidence and unresolved effects |
+| Verification | Typed final outputs with bounded repair; application checks gate success |
+| Usage evidence | Durable model attempts, rejected-response tokens, explicit unknowns, optional cost estimates |
 | API | Python API, worker, optional FastAPI router and reconnectable SSE |
 
 The [Claude live smoke test](docs/CLAUDE_TEST.md) passed six synthetic scenarios at an estimated $0.186 in model usage.
@@ -65,7 +66,7 @@ The runner uses Claude Sonnet 5.5 and synthetic support data. It tests completio
 
 Before each inference call it counts input tokens, adds headroom, and reserves the full maximum output cost against the batch budget. It caps model calls, disables SDK retries, and retains reservations after failed requests. This process-local guard is not an account-wide billing cap. Rates are explicit in `examples/support/live.py` and must be reviewed when prices change. Re-running starts a new batch budget; reported costs are estimates, not a balance query.
 
-For the web demo, set `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL=claude-sonnet-5-5` instead of `OPENAI_MODEL`. The web demo uses ordinary runtime call/token limits; the dollar reservation guard belongs to the CLI test runner.
+For the web demo, set `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL=claude-sonnet-5-5` instead of `OPENAI_MODEL`. The web demo uses runtime call and time limits; the dollar reservation guard belongs to the CLI test runner.
 
 ## Small Python API
 
@@ -103,6 +104,7 @@ agent = Agent(
     ]),
     actions=[Action("count_words", CountInput, CountOutput, count_words)],
     checks=[verify],
+    output_type=CountOutput,
 )
 
 async def main():
@@ -150,6 +152,8 @@ python -m build
 ```
 
 For the checked-in dependency resolution, use `uv sync --frozen --all-extras`, then `uv run --frozen --all-extras ...`. CI runs the tests on Python 3.11 and 3.12, verifies formatting, builds the distribution, and runs the scripted comparison.
+
+The [V1 completion audit](docs/V1_READINESS.md) maps the implemented scope to its evidence and lists the remaining validation work.
 
 See [the API guide](docs/API.md), [recovery and deployment contracts](docs/OPERATIONS.md), [validation report](docs/VALIDATION.md), and [V1 scope/status](docs/V1.md). [CONTRIBUTING.md](CONTRIBUTING.md) describes development expectations.
 

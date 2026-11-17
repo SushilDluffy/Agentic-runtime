@@ -1,10 +1,16 @@
 # Changelog
 
-## Unreleased — 2026-11-17
+## 0.1.1 — 2026-11-18
+
+Complete the V1 implementation with durable per-model-attempt usage records, rejected-response token accounting, explicit unknown usage after interruption, and optional host-configured decimal cost estimates with coverage. Add `Agent.output_type`, provider tool schemas for final outputs, bounded schema repair, and contract-change detection across restart. Simplify the GitHub triage example to use the output contract. Upgrade SQLite record format 1 to 2 with additive defaults and preserve historical evidence. The public API remains experimental; no PyPI publication or production-readiness claim.
+
+Validation and the remaining external release gates are in `docs/V1_READINESS.md`.
+
+### Earlier V1 work — 2026-11-17
 
 Add a GitHub issue-triage reference application and an internal developer-trial report. Fix verification of large proposals by resolving runtime-owned task artifacts before application checks; preserve compact public results. Add 18 regression/integration cases (69 total), read-only GitHub evidence, installed-wheel validation, and labelled Claude fixture runs. No real GitHub issue writes were performed.
 
-## Unreleased — 2026-11-16
+### Earlier V1 work — 2026-11-16
 
 Add the native Anthropic provider, configurable thinking mode, a CLI smoke-test runner with preflight token counting and conservative budget reservations, and Claude selection in the support web demo. Add nine adapter/budget test cases (51 total). Six synthetic live scenarios passed on Claude Sonnet 5.5 using 34 inference calls at an estimated $0.185958. See `docs/CLAUDE_TEST.md`; this does not establish production reliability or baseline superiority.
 

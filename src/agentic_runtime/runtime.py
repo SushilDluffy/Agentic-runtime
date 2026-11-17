@@ -10,7 +10,7 @@ from filelock import Timeout as LockTimeout
 from pydantic import ValidationError
 from referencing import Registry
 
-from .actions import ActionContext, ActionRejected, Agent, TransientError
+from .actions import ActionContext, ActionRejected, Agent, ModelResponseError, TransientError
 from .contracts import (
     TERMINAL,
     WAITING,
@@ -21,6 +21,7 @@ from .contracts import (
     FinishDecision,
     Identity,
     Limits,
+    ModelCall,
     ModelReply,
     Operation,
     PendingRequest,
@@ -57,6 +58,9 @@ class Runtime:
         task = Task(
             agent=agent,
             agent_version=definition.version,
+            output_schema=(
+                definition.output_type.model_json_schema() if definition.output_type else None
+            ),
             objective=objective,
             identity=identity,
             limits=limits or Limits(),
@@ -79,6 +83,15 @@ class Runtime:
         if task.reason:
             review.append(task.reason)
         review.extend(check.detail for check in task.checks if not check.passed)
+        reported = sum(call.usage is not None for call in task.model_calls)
+        if reported < task.usage.model_calls:
+            review.append(
+                f"Per-call usage unavailable for {task.usage.model_calls - reported} "
+                "model attempts; "
+                "token totals may be incomplete"
+            )
+        if task.usage.costed_model_calls < task.usage.model_calls:
+            review.append("Cost estimate is incomplete; consult the provider billing records")
         return TaskResult(
             task_id=task.id,
             status=task.status,
@@ -86,6 +99,7 @@ class Runtime:
             checks=task.checks,
             operations=task.operations,
             usage=task.usage,
+            model_calls=task.model_calls,
             review_items=review,
         )
 
@@ -224,7 +238,7 @@ class Runtime:
 
         self.store.update(task_id, change, "step.finished")
 
-    async def _invoke(self, task_id, function: Callable, kind="callback"):
+    async def _invoke(self, task_id, function: Callable, kind="callback", model_call=None):
         def begin(task):
             if task.usage.active_seconds >= task.limits.active_seconds:
                 raise BudgetExceeded("Active execution budget exhausted")
@@ -232,6 +246,9 @@ class Runtime:
                 if task.usage.model_calls >= task.limits.model_calls:
                     raise BudgetExceeded("Model call budget exhausted")
                 task.usage.model_calls += 1
+                if model_call is not None:
+                    model_call.started_at = time.time()
+                    task.model_calls.append(model_call)
             if kind == "tool":
                 if task.usage.tool_calls >= task.limits.tool_calls:
                     raise BudgetExceeded("Tool call budget exhausted")
@@ -286,6 +303,7 @@ class Runtime:
             list(reversed(messages)),
             [a.schema() for a in agent.actions],
             task.decisions,
+            task.output_schema,
         )
 
     async def run(self, task_id: str) -> Task:
@@ -307,6 +325,15 @@ class Runtime:
                 return self._status(task_id, TaskStatus.BLOCKED, "Agent definition unavailable")
             if task.agent_version != self.agents[task.agent].version:
                 return self._status(task_id, TaskStatus.BLOCKED, "Agent version changed")
+            output_type = self.agents[task.agent].output_type
+            schema = output_type.model_json_schema() if output_type else None
+            if task.output_schema != schema:
+                return self._status(task_id, TaskStatus.BLOCKED, "Agent output contract changed")
+            for call in task.model_calls:
+                if call.state == "dispatched":
+                    self._settle_model_call(
+                        task_id, call.id, "interrupted", error_type="WorkerLost"
+                    )
             if task.step_started_at:
                 self._finish_step(task_id)
             if task.status != TaskStatus.VERIFYING:
@@ -358,6 +385,13 @@ class Runtime:
         task = self.store.get(task_id)
         agent = self.agents[task.agent]
         for attempt in range(task.limits.model_retries + 1):
+            if self.store.get(task_id).cancel_requested:
+                return ModelReply(decision=BlockDecision(reason="Cancellation requested"))
+            call = ModelCall(
+                provider=type(agent.provider).__name__,
+                model=getattr(agent.provider, "model", None),
+                prices=getattr(agent.provider, "prices", None),
+            )
             try:
                 reply = await self._invoke(
                     task_id,
@@ -365,13 +399,53 @@ class Runtime:
                         self._model_context(self.store.get(task_id), context)
                     ),
                     "model",
+                    model_call=call,
                 )
-                return ModelReply.model_validate(reply)
-            except (TransientError, TimeoutError):
-                if attempt == task.limits.model_retries:
+                reply = ModelReply.model_validate(reply)
+                self._settle_model_call(task_id, call.id, "returned", reply.reported_usage())
+                return reply
+            except BaseException as exc:
+                rejected = isinstance(exc, ModelResponseError)
+                self._settle_model_call(
+                    task_id,
+                    call.id,
+                    "rejected"
+                    if rejected
+                    else ("interrupted" if isinstance(exc, asyncio.CancelledError) else "failed"),
+                    exc.usage if rejected else None,
+                    type(exc).__name__,
+                )
+                if (
+                    not isinstance(exc, (TransientError, TimeoutError))
+                    or attempt == task.limits.model_retries
+                ):
                     raise
                 await asyncio.sleep(task.limits.backoff_seconds * 2**attempt)
         raise AssertionError("Unreachable retry loop")
+
+    def _settle_model_call(self, task_id, call_id, state, usage=None, error_type=None):
+        """Settle once, independently of accepting the decision, including rejected replies."""
+
+        def change(task):
+            call = next((c for c in task.model_calls if c.id == call_id), None)
+            if call is None or call.state != "dispatched":
+                return
+            call.state = state
+            call.finished_at = time.time()
+            call.error_type = error_type
+            call.usage = usage
+            if usage is not None:
+                task.usage.input_tokens += usage.input_tokens
+                task.usage.output_tokens += usage.output_tokens
+                if call.prices is not None:
+                    call.estimated_cost_usd = call.prices.estimate(usage)
+                    if call.estimated_cost_usd is not None:
+                        task.usage.estimated_cost_usd += call.estimated_cost_usd
+                        task.usage.costed_model_calls += 1
+
+        self.store.update(
+            task_id, change, "model.call_finished", {"call_id": call_id, "state": state}
+        )
 
     @staticmethod
     def _validate_request_schema(schema, limit):
@@ -436,11 +510,25 @@ class Runtime:
         proposal = None
         proposal_artifact_id = None
         if isinstance(decision, FinishDecision):
-            proposal, proposal_artifact_id = self._prepare_value(task, decision.output)
+            output = decision.output
+            if agent.output_type is not None:
+                try:
+                    output = agent.output_type.model_validate_json(json.dumps(output)).model_dump(
+                        mode="json", by_alias=True
+                    )
+                except ValidationError as exc:
+                    # Guide repair without persisting raw inputs or validator messages.
+                    message = {
+                        "error": "Final output does not match the required schema",
+                        "validation_errors": [
+                            {"location": list(e["loc"]), "type": e["type"]}
+                            for e in exc.errors()[:20]
+                        ],
+                    }
+            if message is None:
+                proposal, proposal_artifact_id = self._prepare_value(task, output)
 
         def change(current):
-            current.usage.input_tokens += reply.input_tokens
-            current.usage.output_tokens += reply.output_tokens
             current.decisions += 1
             if current.cancel_requested:
                 current.status = TaskStatus.CANCELLED
@@ -628,7 +716,20 @@ class Runtime:
             else task.proposal
         )
         checks = []
-        for check in agent.checks:
+        application_checks = agent.checks
+        if agent.output_type is not None:
+            try:
+                agent.output_type.model_validate_json(json.dumps(output))
+            except ValidationError:
+                checks.append(
+                    CheckResult(
+                        name="output_contract",
+                        passed=False,
+                        detail="Stored output violates its schema; check redaction",
+                    )
+                )
+                application_checks = []
+        for check in application_checks:
             if self.store.get(task.id).cancel_requested:
                 self._status(task.id, TaskStatus.CANCELLED, "Cancelled during verification")
                 return

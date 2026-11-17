@@ -45,7 +45,7 @@ class SQLiteStore:
         with self._connect() as db:
             db.execute("PRAGMA journal_mode=WAL")
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise ValueError(f"Unsupported store schema version {version}")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS tasks (
@@ -60,7 +60,7 @@ class SQLiteStore:
                 CREATE TABLE IF NOT EXISTS artifacts (
                     id TEXT PRIMARY KEY, task_id TEXT NOT NULL, data TEXT NOT NULL
                 );
-                PRAGMA user_version=1;
+                PRAGMA user_version=2;
             """)
 
     @contextmanager

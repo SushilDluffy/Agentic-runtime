@@ -1,6 +1,13 @@
 """Persistent agent tasks for Python applications."""
 
-from .actions import Action, ActionContext, ActionRejected, Agent, TransientError
+from .actions import (
+    Action,
+    ActionContext,
+    ActionRejected,
+    Agent,
+    ModelResponseError,
+    TransientError,
+)
 from .contracts import (
     ActionDecision,
     AskDecision,
@@ -9,19 +16,22 @@ from .contracts import (
     FinishDecision,
     Identity,
     Limits,
+    ModelCall,
     ModelReply,
+    ModelUsage,
     Reconciliation,
     RetrieveDecision,
     Task,
     TaskResult,
     TaskStatus,
+    TokenPrices,
 )
 from .providers import AnthropicProvider, ModelContext, OpenAIProvider, Provider, ScriptedProvider
 from .runtime import PermissionDenied, Runtime
 from .store import Conflict, NotFound, SQLiteStore, Store
 from .worker import Worker
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     "Action",
     "ActionContext",
@@ -37,7 +47,11 @@ __all__ = [
     "Identity",
     "Limits",
     "ModelContext",
+    "ModelCall",
     "ModelReply",
+    "ModelResponseError",
+    "ModelUsage",
+    "TokenPrices",
     "NotFound",
     "OpenAIProvider",
     "PermissionDenied",

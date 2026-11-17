@@ -3,11 +3,12 @@
 import hashlib
 import json
 import time
+from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, TypeAdapter, model_validator
 
 
 def new_id() -> str:
@@ -63,6 +64,8 @@ class Usage(Contract):
     input_tokens: int = 0
     output_tokens: int = 0
     active_seconds: float = 0
+    estimated_cost_usd: Decimal = Decimal("0")
+    costed_model_calls: int = 0
 
 
 class ActionDecision(Contract):
@@ -100,10 +103,66 @@ Decision = Annotated[
 DECISION_ADAPTER = TypeAdapter(Decision)
 
 
-class ModelReply(Contract):
-    decision: Decision
+class ModelUsage(Contract):
+    """Input total includes both cache buckets; output includes reported reasoning tokens."""
+
     input_tokens: int = Field(default=0, ge=0)
     output_tokens: int = Field(default=0, ge=0)
+    cache_read_input_tokens: int = Field(default=0, ge=0)
+    cache_creation_input_tokens: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def cache_is_subset(self):
+        if self.cache_read_input_tokens + self.cache_creation_input_tokens > self.input_tokens:
+            raise ValueError("Cache tokens cannot exceed total input tokens")
+        return self
+
+
+class TokenPrices(Contract):
+    """Host-supplied USD per million tokens, for estimates, not billing or admission control."""
+
+    input: Decimal = Field(ge=0, allow_inf_nan=False)
+    output: Decimal = Field(ge=0, allow_inf_nan=False)
+    cache_read: Decimal | None = Field(default=None, ge=0, allow_inf_nan=False)
+    cache_creation: Decimal | None = Field(default=None, ge=0, allow_inf_nan=False)
+
+    def estimate(self, usage: ModelUsage) -> Decimal | None:
+        if (usage.cache_read_input_tokens and self.cache_read is None) or (
+            usage.cache_creation_input_tokens and self.cache_creation is None
+        ):
+            return None
+        ordinary = (
+            usage.input_tokens - usage.cache_read_input_tokens - usage.cache_creation_input_tokens
+        )
+        return (
+            ordinary * self.input
+            + usage.output_tokens * self.output
+            + usage.cache_read_input_tokens * (self.cache_read or Decimal(0))
+            + usage.cache_creation_input_tokens * (self.cache_creation or Decimal(0))
+        ) / Decimal(1_000_000)
+
+
+class ModelReply(ModelUsage):
+    decision: Decision
+    usage_known: bool = True
+
+    def reported_usage(self) -> ModelUsage | None:
+        if not self.usage_known:
+            return None
+        return ModelUsage(**self.model_dump(include=set(ModelUsage.model_fields)))
+
+
+class ModelCall(Contract):
+    id: str = Field(default_factory=new_id)
+    provider: str
+    model: str | None = None
+    state: Literal["dispatched", "returned", "rejected", "failed", "interrupted"] = "dispatched"
+    started_at: float = Field(default_factory=time.time)
+    finished_at: float | None = None
+    usage: ModelUsage | None = None
+    prices: TokenPrices | None = None
+    estimated_cost_usd: Decimal | None = None
+    error_type: str | None = None
 
 
 class Operation(Contract):
@@ -143,6 +202,7 @@ class Task(Contract):
     id: str = Field(default_factory=new_id)
     agent: str
     agent_version: str
+    output_schema: dict | None = None
     identity: Identity
     objective: str = Field(min_length=1, max_length=16000)
     status: TaskStatus = TaskStatus.QUEUED
@@ -153,6 +213,7 @@ class Task(Contract):
     usage: Usage = Field(default_factory=Usage)
     messages: list[dict[str, JsonValue]] = Field(default_factory=list)
     operations: list[Operation] = Field(default_factory=list)
+    model_calls: list[ModelCall] = Field(default_factory=list)
     pending: PendingRequest | None = None
     replies: dict[str, JsonValue] = Field(default_factory=dict)
     checks: list[CheckResult] = Field(default_factory=list)
@@ -185,4 +246,5 @@ class TaskResult(Contract):
     checks: list[CheckResult]
     operations: list[Operation]
     usage: Usage
+    model_calls: list[ModelCall] = Field(default_factory=list)
     review_items: list[str]

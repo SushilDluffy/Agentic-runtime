@@ -1,10 +1,12 @@
-# v0.1.0 validation
+# V1 validation
 
-Measured locally on November 15, 2026, using Python 3.12. The checked-in `uv.lock` records the resolved environment. This report distinguishes tested implementation behavior from outstanding product validation.
+Latest local validation: November 18, 2026, v0.1.1, Python 3.12. The checked-in `uv.lock` records the resolved environment. This report distinguishes tested implementation behavior from outstanding product validation.
 
 ## Automated coverage
 
-The November 17 suite passes **69 tests**. The [internal developer trial](DEVELOPER_TRIAL.md) adds GitHub integration and large-output verification coverage. It covers atomic task/event updates, restart during a user wait, duplicate input and approvals, changed arguments and action semantics, revoked authorization, lost responses, idempotent retry keys, unknown-outcome blocking, recovery after resume, cancellation during an action, competing runners (including process-level lock exclusion), preservation of unknown effects when a retry is cancelled or denied, budget persistence, failed verification, bounded read timeouts, artifact isolation, input-schema restrictions, HTTP ownership, server-owned limits, event replay, and the official OpenAI SDK request/response boundary.
+The November 18 suite passes **93 tests**, including 24 new accounting/output-contract/upgrade cases. The [internal developer trial](DEVELOPER_TRIAL.md) adds GitHub integration and large-output verification coverage. It covers atomic task/event updates, restart during a user wait, duplicate input and approvals, changed arguments and action semantics, revoked authorization, lost responses, idempotent retry keys, unknown-outcome blocking, recovery after resume, cancellation during an action, competing runners (including process-level lock exclusion), preservation of unknown effects when a retry is cancelled or denied, budget persistence, failed verification, bounded read timeouts, artifact isolation, input-schema restrictions, HTTP ownership, server-owned limits, event replay, and the official OpenAI SDK request/response boundary.
+
+The new cases cover both SDKs rejecting billed responses, cache-aware price estimates, unknown usage on lost responses, cancellation and process death, idempotent settlement, schema-1 upgrade, typed-output repair, nested tool schemas, schema changes during waits, and full artifact verification after restart. HTTP results expose the ledger and decimal estimates.
 
 One test runs a real subprocess that exits immediately after the external simulation commits a send, before the runtime persists its result. Restart reconciles the original operation and verifies exactly one recorded send. Other failure tests use controlled async handlers and explicit persisted boundary states. They are not a substitute for testing the actual external systems an application will use.
 

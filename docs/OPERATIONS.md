@@ -51,7 +51,7 @@ To resolve a blocked task: inspect its operation ID, exact arguments, events, an
 
 ## Persistence, security, and maintenance
 
-V1 schema version is 1. Unknown future schema versions are rejected. There is no general migration framework yet. Back up with SQLite's backup API, or stop all writers and take a consistent snapshot; do not copy only the main database while WAL writes are active. Back up domain state separately. Restore and recovery must preserve external operation IDs.
+The v0.1.1 store format version is 2. Opening a version-1 database upgrades the marker and reads old task JSON with additive defaults; existing events, operation IDs and token totals are preserved. Old tasks have no reconstructed model-call ledger. Stop all workers and back up before upgrading; do not run old and new worker versions together. Earlier runtime versions reject format 2. Unknown future versions are rejected. Downgrading requires restoring the pre-upgrade backup; there is no general migration framework. Back up with SQLite's backup API, or stop all writers and take a consistent snapshot; do not copy only the main database while WAL writes are active. Back up domain state separately. Restore and recovery must preserve external operation IDs.
 
 The store contains objectives, action arguments, replies, check records, and bounded outputs. Treat it as sensitive application data. Restrict file permissions and access, and use host-managed disk encryption when required. Dependency objects and credentials are not serialized by the runtime, but values a callback returns or a user submits can still leak secrets. Exception records use types rather than arbitrary messages.
 

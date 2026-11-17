@@ -35,6 +35,10 @@ async def test_http_lifecycle_and_event_resume(tmp_path):
         await runtime.run(task_id)
         result = (await client.get(f"/tasks/{task_id}/result")).json()
         assert result["status"] == "succeeded"
+        assert len(result["model_calls"]) == result["usage"]["model_calls"] == 2
+        assert all(call["state"] == "returned" for call in result["model_calls"])
+        assert result["usage"]["estimated_cost_usd"] == "0"
+        assert result["usage"]["costed_model_calls"] == 2
         events = await client.get(f"/tasks/{task_id}/events")
         ids = [int(line[4:]) for line in events.text.splitlines() if line.startswith("id: ")]
         assert len(ids) > 2

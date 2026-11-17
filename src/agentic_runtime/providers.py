@@ -5,7 +5,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from .actions import TransientError
+from .actions import ModelResponseError, TransientError
 from .contracts import (
     DECISION_ADAPTER,
     ActionDecision,
@@ -15,7 +15,9 @@ from .contracts import (
     FinishDecision,
     JsonValue,
     ModelReply,
+    ModelUsage,
     RetrieveDecision,
+    TokenPrices,
 )
 
 
@@ -27,6 +29,25 @@ class ModelContext:
     messages: list[dict[str, JsonValue]]
     tools: list[dict]
     decision_index: int
+    output_schema: dict | None = None
+
+
+def finish_schema(context: ModelContext) -> dict:
+    if context.output_schema is None:
+        return FinishDecision.model_json_schema()
+    # Definitions must live at the tool root so nested/recursive model refs resolve.
+    output = dict(context.output_schema)
+    definitions = output.pop("$defs", {})
+    return {
+        "type": "object",
+        "properties": {
+            "kind": {"type": "string", "const": "finish", "default": "finish"},
+            "output": output,
+        },
+        "required": ["output"],
+        "additionalProperties": False,
+        **({"$defs": definitions} if definitions else {}),
+    }
 
 
 class Provider(Protocol):
@@ -35,6 +56,8 @@ class Provider(Protocol):
 
 class ScriptedProvider:
     """A restart-safe script indexed by persisted accepted decisions."""
+
+    prices = TokenPrices(input=0, output=0)
 
     def __init__(self, steps: Sequence[Decision] | Callable[[ModelContext], Decision]):
         self.steps = steps
@@ -52,7 +75,14 @@ class ScriptedProvider:
 class OpenAIProvider:
     """Uses the official async client. Client-level retries are disabled by default."""
 
-    def __init__(self, model: str, *, client=None, max_output_tokens: int = 2000):
+    def __init__(
+        self,
+        model: str,
+        *,
+        client=None,
+        max_output_tokens: int = 2000,
+        prices: TokenPrices | None = None,
+    ):
         if client is None:
             from openai import AsyncOpenAI
 
@@ -60,6 +90,7 @@ class OpenAIProvider:
         self.client = client
         self.model = model
         self.max_output_tokens = max_output_tokens
+        self.prices = prices
 
     async def decide(self, context):
         from openai import APIConnectionError, APIStatusError
@@ -73,7 +104,7 @@ class OpenAIProvider:
             {
                 "name": "runtime_finish",
                 "description": "Propose a result for application checks.",
-                "parameters": FinishDecision.model_json_schema(),
+                "parameters": finish_schema(context),
             },
             {
                 "name": "runtime_block",
@@ -122,9 +153,23 @@ class OpenAIProvider:
             if exc.status_code in (408, 409, 429) or exc.status_code >= 500:
                 raise TransientError(f"Model HTTP {exc.status_code}") from exc
             raise
-        calls = response.choices[0].message.tool_calls
-        if not calls or len(calls) != 1:
-            raise TransientError("Model must return exactly one tool call")
+        raw_usage = response.usage
+        details = getattr(raw_usage, "prompt_tokens_details", None)
+        usage = (
+            ModelUsage(
+                input_tokens=raw_usage.prompt_tokens,
+                output_tokens=raw_usage.completion_tokens,
+                cache_read_input_tokens=getattr(details, "cached_tokens", 0) or 0,
+            )
+            if raw_usage
+            else None
+        )
+        choice = response.choices[0] if response.choices else None
+        calls = choice.message.tool_calls if choice else None
+        if not choice or choice.finish_reason != "tool_calls" or not calls or len(calls) != 1:
+            raise ModelResponseError(
+                "Model must return exactly one complete tool call", usage=usage
+            )
         call = calls[0].function
         try:
             arguments = json.loads(call.arguments)
@@ -139,12 +184,11 @@ class OpenAIProvider:
             else:
                 decision = ActionDecision(action=call.name, arguments=arguments)
         except (ValueError, TypeError) as exc:
-            raise TransientError("Model returned invalid tool arguments") from exc
-        usage = response.usage
+            raise ModelResponseError("Model returned invalid tool arguments", usage=usage) from exc
         return ModelReply(
             decision=decision,
-            input_tokens=usage.prompt_tokens if usage else 0,
-            output_tokens=usage.completion_tokens if usage else 0,
+            usage_known=usage is not None,
+            **(usage.model_dump() if usage else {}),
         )
 
 
@@ -158,6 +202,7 @@ class AnthropicProvider:
         client=None,
         max_output_tokens: int = 1024,
         thinking: dict | None = None,
+        prices: TokenPrices | None = None,
     ):
         if max_output_tokens < 1:
             raise ValueError("max_output_tokens must be positive")
@@ -169,6 +214,7 @@ class AnthropicProvider:
         self.model = model
         self.max_output_tokens = max_output_tokens
         self.thinking = dict(thinking) if thinking is not None else None
+        self.prices = prices
 
     def request(self, context: ModelContext) -> dict:
         """Expose the exact request for host-side token counting and budget admission."""
@@ -187,7 +233,13 @@ class AnthropicProvider:
             for tool in context.tools
         ]
         tools.extend(
-            {"name": name, "description": description, "input_schema": model.model_json_schema()}
+            {
+                "name": name,
+                "description": description,
+                "input_schema": (
+                    finish_schema(context) if model is FinishDecision else model.model_json_schema()
+                ),
+            }
             for name, description, model in internal
         )
         return {
@@ -229,9 +281,24 @@ class AnthropicProvider:
             if exc.status_code in (408, 409, 429, 529) or exc.status_code >= 500:
                 raise TransientError(f"Model HTTP {exc.status_code}") from exc
             raise
+        raw_usage = response.usage
+        creation = getattr(raw_usage, "cache_creation_input_tokens", 0) or 0
+        read = getattr(raw_usage, "cache_read_input_tokens", 0) or 0
+        usage = (
+            ModelUsage(
+                input_tokens=raw_usage.input_tokens + creation + read,
+                output_tokens=raw_usage.output_tokens,
+                cache_creation_input_tokens=creation,
+                cache_read_input_tokens=read,
+            )
+            if raw_usage
+            else None
+        )
         calls = [block for block in response.content if block.type == "tool_use"]
         if response.stop_reason != "tool_use" or len(calls) != 1:
-            raise TransientError("Model must return exactly one complete tool call")
+            raise ModelResponseError(
+                "Model must return exactly one complete tool call", usage=usage
+            )
         call = calls[0]
         parsers = {
             "runtime_ask": AskDecision,
@@ -246,12 +313,9 @@ class AnthropicProvider:
                 else ActionDecision(action=call.name, arguments=call.input)
             )
         except (ValueError, TypeError) as exc:
-            raise TransientError("Model returned invalid tool arguments") from exc
-        usage = response.usage
+            raise ModelResponseError("Model returned invalid tool arguments", usage=usage) from exc
         return ModelReply(
             decision=decision,
-            input_tokens=usage.input_tokens
-            + (getattr(usage, "cache_creation_input_tokens", 0) or 0)
-            + (getattr(usage, "cache_read_input_tokens", 0) or 0),
-            output_tokens=usage.output_tokens,
+            usage_known=usage is not None,
+            **(usage.model_dump() if usage else {}),
         )
