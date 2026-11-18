@@ -10,7 +10,23 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{name = "SushilDluffy"}]
+keywords = ["agents", "ai", "runtime", "durable-execution", "verification"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
 dependencies = ["pydantic>=2.10,<3", "filelock>=3.16,<4", "jsonschema>=4.23,<5"]
+
+[project.urls]
+Homepage = "https://github.com/SushilDluffy/Agentic-runtime"
+Repository = "https://github.com/SushilDluffy/Agentic-runtime"
+Documentation = "https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/API.md"
+Issues = "https://github.com/SushilDluffy/Agentic-runtime/issues"
+Changelog = "https://github.com/SushilDluffy/Agentic-runtime/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 openai = ["openai>=1.60,<3"]

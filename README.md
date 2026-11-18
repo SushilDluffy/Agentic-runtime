@@ -4,7 +4,7 @@
 
 Give an agent your application's typed actions, authenticated user context, and completion checks. The runtime manages execution, durable questions and approvals, recovery, and a result record you can inspect.
 
-**v0.1.1 is experimental.** The implementation, examples, failure tests, and scripted comparison are available. A six-scenario Claude smoke test passes; broader live-model evaluation and independent developer usability testing remain open. The package is installable from this repository; it has not been published to PyPI.
+**v0.1.1 is experimental.** The implementation, examples, failure tests, and scripted comparison are available. A six-scenario Claude smoke test passes; broader live-model evaluation and independent developer usability testing remain open. Source installation is documented below. Maintainers can follow the [publishing guide](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/PUBLISHING.md) to release the package to PyPI.
 
 ## What it handles
 
@@ -20,7 +20,7 @@ Give an agent your application's typed actions, authenticated user context, and 
 | Usage evidence | Durable model attempts, rejected-response tokens, explicit unknowns, optional cost estimates |
 | API | Python API, worker, optional FastAPI router and reconnectable SSE |
 
-The [Claude live smoke test](docs/CLAUDE_TEST.md) passed six synthetic scenarios at an estimated $0.186 in model usage.
+The [Claude live smoke test](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/CLAUDE_TEST.md) passed six synthetic scenarios at an estimated $0.186 in model usage.
 
 The product hypothesis is that these behaviors are easier to ship through one small application API. The current comparison validates selected failure behavior; it does **not** establish an advantage over LangGraph.
 
@@ -52,7 +52,7 @@ python -m examples.projects.run
 
 A lost response recovers the recorded send without a second send. An unresolvable outcome blocks with an explicit unknown operation. CLI examples automatically answer their scripted prompts and approvals; the UI exposes them for human review.
 
-For real model decisions, set `OPENAI_API_KEY` and `OPENAI_MODEL` in your environment before starting the web application. Choose a tool-calling model available to your account. This makes paid API calls. The runtime path, tools, approvals, and checks stay the same. The OpenAI path has mocked SDK tests; the [Claude live smoke test](docs/CLAUDE_TEST.md) records our first live-model results.
+For real model decisions, set `OPENAI_API_KEY` and `OPENAI_MODEL` in your environment before starting the web application. Choose a tool-calling model available to your account. This makes paid API calls. The runtime path, tools, approvals, and checks stay the same. The OpenAI path has mocked SDK tests; the [Claude live smoke test](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/CLAUDE_TEST.md) records our first live-model results.
 
 ## Test with Claude
 
@@ -121,14 +121,14 @@ Replace `ScriptedProvider(...)` with `OpenAIProvider(model="your-model")` after 
 
 ## GitHub triage and the developer trial
 
-The [GitHub issue-triage example](examples/github_triage/README.md) proposes labels and missing-information questions, with optional exact-action approval before adding labels. It runs on synthetic fixtures by default; real repository reads are opt-in. No comments are posted.
+The [GitHub issue-triage example](https://github.com/SushilDluffy/Agentic-runtime/blob/main/examples/github_triage/README.md) proposes labels and missing-information questions, with optional exact-action approval before adding labels. It runs on synthetic fixtures by default; real repository reads are opt-in. No comments are posted.
 
 ```bash
 python -m pip install -e '.[github]'
 python -m examples.github_triage.run
 ```
 
-Our [internal developer trial](docs/DEVELOPER_TRIAL.md) found and fixed a large-output verification bug, exercised the installed package, and recorded live Claude runs. This is an author-led integration test, not independent evidence of developer-experience superiority.
+Our [internal developer trial](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/DEVELOPER_TRIAL.md) found and fixed a large-output verification bug, exercised the installed package, and recorded live Claude runs. This is an author-led integration test, not independent evidence of developer-experience superiority.
 
 ## Guarantees and boundaries
 
@@ -153,9 +153,9 @@ python -m build
 
 For the checked-in dependency resolution, use `uv sync --frozen --all-extras`, then `uv run --frozen --all-extras ...`. CI runs the tests on Python 3.11 and 3.12, verifies formatting, builds the distribution, and runs the scripted comparison.
 
-The [V1 completion audit](docs/V1_READINESS.md) maps the implemented scope to its evidence and lists the remaining validation work.
+The [V1 completion audit](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/V1_READINESS.md) maps the implemented scope to its evidence and lists the remaining validation work.
 
-See [the API guide](docs/API.md), [recovery and deployment contracts](docs/OPERATIONS.md), [validation report](docs/VALIDATION.md), and [V1 scope/status](docs/V1.md). [CONTRIBUTING.md](CONTRIBUTING.md) describes development expectations.
+See [the API guide](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/API.md), [recovery and deployment contracts](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/OPERATIONS.md), [validation report](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/VALIDATION.md), and [V1 scope/status](https://github.com/SushilDluffy/Agentic-runtime/blob/main/docs/V1.md). [CONTRIBUTING.md](https://github.com/SushilDluffy/Agentic-runtime/blob/main/CONTRIBUTING.md) describes development expectations.
 
 ## License
 

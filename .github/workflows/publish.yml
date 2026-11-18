@@ -1,0 +1,74 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the validated package to production PyPI
+        type: boolean
+        default: false
+        required: true
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-publication
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --all-extras
+      - run: uv run --frozen --all-extras ruff check src tests examples benchmarks
+      - run: uv run --frozen --all-extras ruff format --check src tests examples benchmarks
+      - run: uv run --frozen --all-extras pytest -q
+      - run: uv run --frozen --all-extras python -m benchmarks.run --output /tmp/benchmark-results.json
+
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --all-extras
+      - run: uv run --frozen --all-extras python -m build
+      - run: uvx twine check --strict dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi-distributions
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/agentic-runtime/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi-distributions
+          path: dist/
+      - name: Publish validated distributions with OIDC
+        uses: pypa/gh-action-pypi-publish@release/v1
